@@ -1,12 +1,11 @@
-from .book import Book
 from .browser import Browser
 
 
 BASE_URL = 'https://books.toscrape.com/'
 
 
-def get_all_categories_url():
-    browser = Browser(BASE_URL)
+async def get_all_categories_url():
+    browser = await Browser(BASE_URL)
     panel_category = browser.soup.find(id="promotions_left").find_next('div')
     ul_category = panel_category.ul.ul
 
@@ -21,33 +20,28 @@ def get_all_categories_url():
 
 # TODO implement _reset method
 class Category(Browser):
-    def __init__(self, url, name=None):
-        super().__init__(url)
+    async def __init__(self, url, name=None):
+        await super().__init__(url)
         if name is None:
             name = url
         self.name = name
         self.index = url
 
-    def iter_all_books(self):
-        for book_name, url, _ in self.iter_all_books_url():
-            book = Book(url, name=book_name)
-            info = book.get_info()
-            image = book.get_image()
-            yield info, image
-
-    def iter_all_books_url(self):
+    async def iter_all_books_url(self):
         section = self.soup.section
-        for article in section.find_all('article'):
-            link = article.h3.a
-            name = link.text
-            url = self.clean_url(link['href'])
-            img_url = article.find('div', class_='image_container').img['src']
-            img_url = self.clean_url(img_url)
-            yield name, url, img_url
-
-        if not self._has_reached_last_page():
-            self._go_to_next_page()
-            yield from self.iter_all_books_url()
+        while True:
+            for article in section.find_all('article'):
+                link = article.h3.a
+                name = link.text
+                url = self.clean_url(link['href'])
+                img_url = article.find(
+                    'div', class_='image_container').img['src']
+                img_url = self.clean_url(img_url)
+                yield name, url, img_url
+            if not self._has_reached_last_page():
+                await self._go_to_next_page()
+            else:
+                break
 
     def _has_reached_last_page(self):
         try:
@@ -56,9 +50,9 @@ class Category(Browser):
         except AttributeError:
             return True
 
-    def _go_to_next_page(self):
+    async def _go_to_next_page(self):
         url = self.soup.find('li', class_='next').a['href']
-        self.go_to(url)
+        await self.go_to(url)
 
     def books_quantity(self):
         form = self.soup.find(id='promotions').find_next('form')

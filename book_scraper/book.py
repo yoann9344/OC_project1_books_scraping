@@ -14,20 +14,20 @@ REVIEWS = 'Number of reviews'
 
 
 class Book(Browser):
-    def __init__(self, url, name=None):
-        super().__init__(url)
+    async def __init__(self, url, name=None):
+        await super().__init__(url)
         if name is None:
             name = url
         self.name = name
 
-    def get_info(self):
+    async def get_info(self):
         informations = {}
         for field_name, field_value in iter_table(self.soup.table):
             informations[field_name] = field_value
 
         return extract_info(informations)
 
-    def get_image(self):
+    async def get_image(self):
         """Retrieve the book's image
         Returns
         -------
@@ -35,7 +35,8 @@ class Book(Browser):
             book's image and extension's name
         """
         img_url = self.soup.find(id='product_gallery').img['src']
-        image = self.get(img_url).content
+        image_response = await self.get(img_url)
+        image = image_response.content
         image_extension = img_url.split('.')[-1]
         return Image(file=image, name=self.name, extension=image_extension)
 
