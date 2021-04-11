@@ -1,5 +1,6 @@
 import os
 import csv
+import asyncio
 from sys import exit
 from signal import signal, SIGINT
 from pathlib import Path
@@ -49,22 +50,47 @@ def write_info(path: Path, content: List[Dict]):
         dict_writer.writerows(content)
 
 
-categories_url = get_all_categories_url()
+async def retrieve_book(book_name, book_url, path_images):
+    book = await Book(book_url, name=book_name)
+    info = await book.get_info()
+    image = await book.get_image()
+    image_name = image.name.replace(os.sep, '_')
+    write_image(
+        path_images / f'{image_name}.{image.extension}',
+        image.file,
+    )
+    return info
 
-for name, url in categories_url.items():
-    category = Category(name=name, url=url)
-    path_category = Path(FILES_PATH) / name
-    path_images = path_category / 'images'
-    path_images.mkdir(parents=True, exist_ok=True)
-    books_info = []
-    with tqdm(desc=name, total=category.books_quantity()) as progress_bar:
-        for info, image in category.iter_all_books():
-            books_info.append(info)
-            image_name = image.name.replace(os.sep, '_')
-            write_image(
-                path_images / f'{image_name}.{image.extension}',
-                image.file,
-            )
+
+async def main():
+    categories_url = await get_all_categories_url()
+
+    for category_name, category_url in categories_url.items():
+        # print(category_name)
+        category = await Category(name=category_name, url=category_url)
+        path_category = Path(FILES_PATH) / category_name
+        path_images = path_category / 'images'
+        path_images.mkdir(parents=True, exist_ok=True)
+
+        books_url = []
+        async for book_name, url, _ in category.iter_all_books_url():
+            books_url.append((book_name, url))
+        tasks = [
+        ]
+        for book_name, book_url in books_url:
+            tasks.append(retrieve_book(book_name, book_url, path_images))
+
+        books_info = []
+        progress_bar = tqdm(total=len(books_url), desc=category_name)
+        for t in asyncio.as_completed(tasks):
+            value = await t
+            books_info.append(value)
             progress_bar.update()
-            InterruptionHandler.check_interruption()
-    write_info(path_category / f'{name}.csv', books_info)
+            # TODO to handle sigint, need to check if all tasks
+            # are finished
+            # InterruptionHandler.check_interruption()
+        write_info(path_category / f'{category_name}.csv', books_info)
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
