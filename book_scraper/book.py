@@ -1,7 +1,5 @@
 import re
 
-import requests
-
 from .browser import Browser
 from .image import Image
 
@@ -37,8 +35,7 @@ class Book(Browser):
             book's image and extension's name
         """
         img_url = self.soup.find(id='product_gallery').img['src']
-        img_url = self.clean_url(img_url)
-        image = requests.get(img_url).content
+        image = self.get(img_url).content
         image_extension = img_url.split('.')[-1]
         return Image(file=image, name=self.name, extension=image_extension)
 
