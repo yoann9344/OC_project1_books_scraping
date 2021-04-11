@@ -2,7 +2,9 @@ import re
 
 import requests
 
-from book_scraper.browser import Browser
+from .browser import Browser
+from .image import Image
+
 
 UPC = 'UPC'
 PRODUCT_TYPE = 'Product Type'
@@ -14,6 +16,12 @@ REVIEWS = 'Number of reviews'
 
 
 class Book(Browser):
+    def __init__(self, url, name=None):
+        super().__init__(url)
+        if name is None:
+            name = url
+        self.name = name
+
     def get_info(self):
         informations = {}
         for field_name, field_value in iter_table(self.soup.table):
@@ -25,13 +33,14 @@ class Book(Browser):
         """Retrieve the book's image
         Returns
         -------
-        bytes
-            book's image
+        bytes, str
+            book's image and extension's name
         """
         img_url = self.soup.find(id='product_gallery').img['src']
         img_url = self.clean_url(img_url)
         image = requests.get(img_url).content
-        return image
+        image_extension = img_url.split('.')[-1]
+        return Image(file=image, name=self.name, extension=image_extension)
 
 
 def iter_table(soup_table):

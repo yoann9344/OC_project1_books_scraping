@@ -1,40 +1,36 @@
-from urllib.parse import urljoin
-
-import requests
-from bs4 import BeautifulSoup
-
 from .book import Book
-from book_scraper.browser import Browser
+from .browser import Browser
 
 
 BASE_URL = 'https://books.toscrape.com/'
 
 
 def get_all_categories_url():
-    page = requests.get(BASE_URL)
-    soup = BeautifulSoup(page.text, 'html.parser')
-    panel_category = soup.find(id="promotions_left").find_next('div')
+    browser = Browser(BASE_URL)
+    panel_category = browser.soup.find(id="promotions_left").find_next('div')
     ul_category = panel_category.ul.ul
 
     categories = {}
     for link in ul_category.find_all('a'):
         url = link['href']
         name = link.text.strip()
-        categories[name] = urljoin(BASE_URL, url)
+        categories[name] = browser.clean_url(url)
 
     return categories
 
 
 # TODO implement _reset method
 class Category(Browser):
-    def __init__(self, name, url):
+    def __init__(self, url, name=None):
         super().__init__(url)
+        if name is None:
+            name = url
         self.name = name
         self.index = url
 
     def iter_all_books(self):
-        for name, url, _ in self.iter_all_books_url():
-            book = Book(url)
+        for book_name, url, _ in self.iter_all_books_url():
+            book = Book(url, name=book_name)
             info = book.get_info()
             image = book.get_image()
             yield info, image
