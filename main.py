@@ -1,5 +1,7 @@
 import os
 import csv
+from sys import exit
+from signal import signal, SIGINT
 from pathlib import Path
 from typing import List, Dict
 
@@ -8,6 +10,29 @@ from tqdm import tqdm
 from book_scraper import Book, Category, get_all_categories_url
 
 FILES_PATH = 'data/'
+
+
+class InterruptionHandler():
+    interrupted = False
+
+    @classmethod
+    def sigint(cls, *args, **kwargs):
+        cls.interrupted = True
+
+    @classmethod
+    def check_interruption(cls):
+        if cls.interrupted:
+            print('Excution interrupted.')
+            print('Do you want to exit ? [y]/n ', end='')
+            answer = input()
+            if answer in ('', 'y'):
+                exit(0)
+            else:
+                cls.interrupted = False
+        return
+
+
+signal(SIGINT, InterruptionHandler.sigint)
 
 
 def write_image(path: Path, content: bytes):
@@ -27,7 +52,6 @@ def write_info(path: Path, content: List[Dict]):
 categories_url = get_all_categories_url()
 
 for name, url in categories_url.items():
-    # print('Category :', name)
     category = Category(name=name, url=url)
     path_category = Path(FILES_PATH) / name
     path_images = path_category / 'images'
@@ -42,4 +66,5 @@ for name, url in categories_url.items():
                 image.file,
             )
             progress_bar.update()
+            InterruptionHandler.check_interruption()
     write_info(path_category / f'{name}.csv', books_info)

@@ -130,3 +130,6 @@ dmypy.json
 
 # vim session
 vimsession
+
+# scraped data
+/data/

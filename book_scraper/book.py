@@ -42,6 +42,11 @@ class Book(Browser):
         image_extension = img_url.split('.')[-1]
         return Image(file=image, name=self.name, extension=image_extension)
 
+    def get_category_name(self):
+        bread = self.soup.find('ul', class_='breadcrumb')
+        _, _, category_link = bread.find_all('a')
+        return category_link.text
+
 
 def iter_table(soup_table):
     for tr in soup_table.find_all('tr'):
