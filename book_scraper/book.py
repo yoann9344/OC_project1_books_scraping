@@ -1,8 +1,8 @@
 import re
-from urllib.parse import urljoin
 
 import requests
-from bs4 import BeautifulSoup
+
+from book_scraper.browser import Browser
 
 UPC = 'UPC'
 PRODUCT_TYPE = 'Product Type'
@@ -13,12 +13,7 @@ AVAILABILITY = 'Availability'
 REVIEWS = 'Number of reviews'
 
 
-class Book():
-    def __init__(self, book_url):
-        self.url = book_url
-        page = requests.get(book_url)
-        self.soup = BeautifulSoup(page.text, 'html.parser')
-
+class Book(Browser):
     def get_info(self):
         informations = {}
         for field_name, field_value in iter_table(self.soup.table):
@@ -34,7 +29,7 @@ class Book():
             book's image
         """
         img_url = self.soup.find(id='product_gallery').img['src']
-        img_url = urljoin(self.url, img_url)
+        img_url = self.clean_url(img_url)
         image = requests.get(img_url).content
         return image
 
