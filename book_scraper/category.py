@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from .book import Book
+from book_scraper.browser import Browser
 
 
 BASE_URL = 'https://books.toscrape.com/'
@@ -25,13 +26,11 @@ def get_all_categories_url():
 
 
 # TODO implement _reset method
-class Category():
+class Category(Browser):
     def __init__(self, name, url):
+        super().__init__(url)
         self.name = name
-        self.url = url
         self.index = url
-        page = requests.get(url)
-        self.soup = BeautifulSoup(page.text, 'html.parser')
 
     def iter_all_books(self):
         for name, url, _ in self.iter_all_books_url():
@@ -45,9 +44,9 @@ class Category():
         for article in section.find_all('article'):
             link = article.h3.a
             name = link.text
-            url = urljoin(self.url, link['href'])
+            url = self.clean_url(link['href'])
             img_url = article.find('div', class_='image_container').img['src']
-            img_url = urljoin(self.url, img_url)
+            img_url = self.clean_url(img_url)
             yield name, url, img_url
 
         if not self._has_reached_last_page():
@@ -63,10 +62,7 @@ class Category():
 
     def _go_to_next_page(self):
         url = self.soup.find('li', class_='next').a['href']
-        url = urljoin(self.url, url)
-        self.url = url
-        page = requests.get(url)
-        self.soup = BeautifulSoup(page.text, 'html.parser')
+        self.go_to(url)
 
 
 if __name__ == '__main__':
