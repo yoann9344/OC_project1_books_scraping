@@ -60,6 +60,15 @@ class Category(Browser):
         url = self.soup.find('li', class_='next').a['href']
         self.go_to(url)
 
+    def books_quantity(self):
+        form = self.soup.find(id='promotions').find_next('form')
+        strongs = form.find_all('strong')
+        if len(strongs) == 3:
+            total_tag, _, _ = form.find_all('strong')
+        else:  # only one when 20 items or less
+            total_tag = form.find_all('strong')[0]
+        return int(total_tag.text)
+
 
 if __name__ == '__main__':
     categories = get_all_categories_url()
