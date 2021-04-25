@@ -8,7 +8,7 @@ from typing import List, Dict
 
 from tqdm import tqdm
 
-from book_scraper import Book, Category, get_all_categories_url
+from book_scraper import Book, Category
 
 FILES_PATH = 'data/'
 
@@ -41,16 +41,15 @@ def write_image(path: Path, content: bytes):
         f.write(content)
 
 
-def write_info(path: Path, content: List[Dict]):
-    if len(content) == 0:
-        return
-    with path.open('w+') as f:
-        dict_writer = csv.DictWriter(f, content[0].keys())
-        dict_writer.writeheader()
-        dict_writer.writerows(content)
+def write_info(path: Path, content: List[Dict], append=False):
+    if content:
+        with path.open('a+' if append else 'w+') as f:
+            dict_writer = csv.DictWriter(f, content[0].keys())
+            dict_writer.writeheader()
+            dict_writer.writerows(content)
 
 
-async def retrieve_book(book_name, book_url, path_images):
+async def retrieve_book(book_url, path_images, book_name=None):
     book = await Book(book_url, name=book_name)
     info = await book.get_info()
     image = await book.get_image()
@@ -62,8 +61,13 @@ async def retrieve_book(book_name, book_url, path_images):
     return info
 
 
-async def main():
-    categories_url = await get_all_categories_url()
+# TODO WIP
+async def get_book(book_url, path_images, book_name=None):
+    return await retrieve_book(book_url, path_images, book_name=book_name)
+
+
+async def get_all_books():
+    categories_url = await Category.get_all_categories_url()
 
     for category_name, category_url in categories_url.items():
         # print(category_name)
@@ -78,19 +82,20 @@ async def main():
         tasks = [
         ]
         for book_name, book_url in books_url:
-            tasks.append(retrieve_book(book_name, book_url, path_images))
+            tasks.append(
+                retrieve_book(book_url, path_images, book_name=book_name))
 
         books_info = []
         progress_bar = tqdm(total=len(books_url), desc=category_name)
-        for t in asyncio.as_completed(tasks):
-            value = await t
-            books_info.append(value)
+        for task in asyncio.as_completed(tasks):
+            info = await task
+            books_info.append(info)
             progress_bar.update()
-            # TODO to handle sigint, need to check if all tasks
-            # are finished
-            # InterruptionHandler.check_interruption()
+        # TODO to handle sigint, need to check if all tasks
+        # are finished
+        # InterruptionHandler.check_interruption()
         write_info(path_category / f'{category_name}.csv', books_info)
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(get_all_books())
