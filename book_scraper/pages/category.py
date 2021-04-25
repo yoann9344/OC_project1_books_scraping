@@ -1,4 +1,4 @@
-from .browser import Browser
+from ..browser import Browser
 
 
 BASE_URL = 'https://books.toscrape.com/'

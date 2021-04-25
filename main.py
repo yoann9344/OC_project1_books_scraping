@@ -50,8 +50,8 @@ def write_info(path: Path, content: List[Dict], append=False):
 
 
 async def retrieve_book(book_url, path_images, book_name=None):
-    book = await Book(book_url, name=book_name)
-    info = await book.get_info()
+    book = await Book(book_url, title=book_name)
+    info = book.get_info()
     image = await book.get_image()
     image_name = image.name.replace(os.sep, '_')
     write_image(

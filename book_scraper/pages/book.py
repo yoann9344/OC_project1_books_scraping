@@ -1,7 +1,7 @@
 import re
 
-from .browser import Browser
-from .image import Image
+from ..browser import Browser
+from ..models import Image
 
 
 UPC = 'UPC'
@@ -57,8 +57,12 @@ class Book(Browser):
         -------
         description: str
         """
-        description_title = self.soup.find(id_='product_description')
-        return description_title.find_next('p').text
+        description_title = self.soup.find(id='product_description')
+        # Sometimes books have no description
+        if description_title is None:
+            return ''
+        else:
+            return description_title.find_next('p').text
 
     def get_rating(self):
         """Retrieve the book's rating or 0
@@ -112,7 +116,7 @@ class Book(Browser):
         if url := getattr(self, '_image_url', None):
             return url
         else:
-            self._img_url = self.soup.find(id='product_gallery').img['src']
+            self._image_url = self.soup.find(id='product_gallery').img['src']
             return self._image_url
 
     async def get_image(self):
@@ -124,8 +128,8 @@ class Book(Browser):
         """
         # image_response = await self.get(self.img_url)
         # image = image_response.content
-        image = (await self.get(self.img_url)).content
-        image_extension = self.img_url.split('.')[-1]
+        image = (await self.get(self.image_url)).content
+        image_extension = self.image_url.split('.')[-1]
         return Image(file=image, name=self.title, extension=image_extension)
 
     def _iter_product_info(self):
