@@ -6,6 +6,11 @@ BASE_URL = 'https://books.toscrape.com/'
 
 # TODO implement a to reset page
 class Category(Browser):
+    async def __init__(self, url, name=None):
+        await super().__init__(url)
+        self._name = name
+        self.index = url
+
     @staticmethod
     async def get_all_categories_url():
         browser = await Browser(BASE_URL)
@@ -19,13 +24,6 @@ class Category(Browser):
             categories[name] = browser.clean_url(url)
 
         return categories
-
-    async def __init__(self, url, name=None):
-        await super().__init__(url)
-        if name is None:
-            name = url
-        self.name = name
-        self.index = url
 
     async def iter_all_books_url(self):
         """Iterate over all category's books
@@ -71,6 +69,19 @@ class Category(Browser):
         """
         url = self.soup.find('li', class_='next').a['href']
         await self.go_to(url)
+
+    @property
+    def name(self):
+        """Retrieve the book's category
+        Returns
+        -------
+        category_name: str
+        """
+        if name := getattr(self, '_name', None):
+            return name
+        else:
+            self._name = self.soup.find('h1').text
+            return self._name
 
     def books_quantity(self):
         """Retrieve the number of category's books
