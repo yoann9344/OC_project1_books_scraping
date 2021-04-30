@@ -18,8 +18,8 @@ signal(SIGINT, InterruptionHandler.sigint)
 @click.option('-c', '--category', 'category_url', type=str)
 @click.option('-d', '--directory', envvar='BOOKS_DIRECTORY', default='./data/')
 def cli(directory, book_url, category_url, all_books):
-    if book_url and category_url:
-        print('Can\'t use -c and -b together.', file=sys.stderr)
+    if (book_url and category_url) or (book_url and all_books) or (category_url and all_books):
+        print('Can\'t use -c, -b and all together.', file=sys.stderr)
         ctx = click.get_current_context()
         click.echo(ctx.get_help())
         return
