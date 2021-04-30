@@ -48,6 +48,12 @@ getbooks -b <url_category>
 getbooks --book <url_book>
 ```
 
+Retrieve all books, with data in json format
+```sh
+getbooks --json
+getbooks --all --json
+```
+
 You can send SIGINT to interrupt the execution of the programm (CTRL + C)
 
 ## Meta
