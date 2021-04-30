@@ -79,8 +79,9 @@ class Scraper():
             books_info,
             headers=books_info[0].keys(),
         )
+        path_info = path_category / f'{category_name}.' + self.serializer.extension
         self.storage.save(
-            path=path_category / f'{category_name}.csv',
+            path=path_info,
             data=books_info_serialized,
         )
 

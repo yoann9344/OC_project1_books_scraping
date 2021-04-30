@@ -17,7 +17,8 @@ signal(SIGINT, InterruptionHandler.sigint)
 @click.option('-b', '--book', 'book_url', type=str)
 @click.option('-c', '--category', 'category_url', type=str)
 @click.option('-d', '--directory', envvar='BOOKS_DIRECTORY', default='./data/')
-def cli(directory, book_url, category_url, all_books):
+@click.option('--json', is_flag=True)
+def cli(directory, book_url, category_url, all_books, json):
     if (book_url and category_url) or (book_url and all_books) or (category_url and all_books):
         print('Can\'t use -c, -b and all together.', file=sys.stderr)
         ctx = click.get_current_context()
@@ -31,7 +32,8 @@ def cli(directory, book_url, category_url, all_books):
         r'(?::\d+)?'  # optional port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
-    scraper = Scraper('csv', 'local')
+    format_info = 'json' if json else 'csv'
+    scraper = Scraper(format_info, 'local')
     path = Path(directory)
     scraper.storage.mkdir(path, recursive=True)
 
