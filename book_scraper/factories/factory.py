@@ -13,4 +13,8 @@ class Factory:
         return builder(*args, **kwargs)
 
     def validate(self, builder):
-        raise NotImplementedError()
+        for method in self.required_attributes:
+            if not hasattr(builder, method):
+                raise NotImplementedError(
+                    f'Serializer\'s method "{method}" not implemented'
+                )

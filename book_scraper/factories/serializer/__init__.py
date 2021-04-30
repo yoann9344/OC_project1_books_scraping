@@ -1,4 +1,4 @@
-from .factory import SerializerFactory
+from .serializer_factory import SerializerFactory
 from .csv import CsvSerializer
 from .json import JsonSerializer
 
