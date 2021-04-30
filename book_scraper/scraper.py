@@ -8,6 +8,31 @@ from .pages import Book, Category
 from .factories import serializer_factory, storage_factory
 
 
+class InterruptionHandler():
+    interrupted = False
+
+    # Link sigint to this method to handle interruptions
+    # signal(SIGINT, InterruptionHandler.sigint)
+    @classmethod
+    def sigint(cls, *args, **kwargs):
+        cls.interrupted = True
+
+    @classmethod
+    def check_interruption(cls, progress_bar):
+        if cls.interrupted:
+            progress_bar.refresh()
+            print()
+            print('Excution interrupted.')
+            print('Do you want to exit ? [y]/n ', end='')
+            answer = input()
+            if answer in ('', 'y'):
+                exit(0)
+            else:
+                progress_bar.reset()
+                cls.interrupted = False
+        return
+
+
 class Scraper():
     def __init__(self, serializer_format, service_name):
         self.serializer = serializer_factory.create(serializer_format)
@@ -48,7 +73,8 @@ class Scraper():
             progress_bar.update()
         # TODO to handle sigint, need to check if all tasks
         # are finished
-        # InterruptionHandler.check_interruption()
+        InterruptionHandler.check_interruption(progress_bar)
+
         books_info_serialized = self.serializer.serialize(
             books_info,
             headers=books_info[0].keys(),
@@ -62,4 +88,4 @@ class Scraper():
         categories_url = await Category.get_all_categories_url()
 
         for category_name, category_url in categories_url.items():
-            await self.get_all_books_in_category(category_name, category_url, path)
+            await self.get_all_books_in_category(category_url, path, category_name=category_name)

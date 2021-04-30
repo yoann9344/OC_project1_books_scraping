@@ -1,4 +1,4 @@
-from .scraper import Scraper
+from .scraper import Scraper, InterruptionHandler
 
 from .browser import Browser
 from .pages import Book, Category
